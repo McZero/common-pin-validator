@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: qa
+  labels:
+    app: msapinvalidator
+    qa: msapinvalidator
+  name: msapinvalidator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: msapinvalidator
+  template:
+    metadata:
+      labels:
+        app: msapinvalidator
+        qa: msapinvalidator
+      name: msapinvalidator
+    spec:
+      nodeSelector:
+        workloadType: hircasa
+      containers:
+      - name: msapinvalidator
+        image: acrhircasaqa001.azurecr.io/msapinvalidator:uat
+        imagePullPolicy: Always
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Staging
+        resources:
+          limits:
+            cpu: "300m"
+            memory: "100Mi"
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: qa
+  name: msapinvalidator
+  labels:
+    app: msapinvalidator
+    qa: msapinvalidator
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: msapinvalidator
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: qa
+  name: msapinvalidator
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - pinvalidator.uat.api.hircasa.com
+      secretName: pinvalidator-qa-cert
+  rules:
+    - host: pinvalidator.uat.api.hircasa.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: msapinvalidator
+                port:
+                  number: 8080
+            pathType: ImplementationSpecific

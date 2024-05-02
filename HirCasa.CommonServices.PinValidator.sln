@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HirCasa.CommonServices.PinValidator.Infrastructure", "HirCasa.CommonServices.PinValidator.Infrastructure\HirCasa.CommonServices.PinValidator.Infrastructure.csproj", "{3AF7DDBC-A679-4EFA-B3E0-B9232A6E6E95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HirCasa.CommonServices.PinValidator.Business", "HirCasa.CommonServices.PinValidator.Business\HirCasa.CommonServices.PinValidator.Business.csproj", "{C3D61958-4F28-418C-9119-CDEA14C5CDB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HirCasa.CommonServices.PinValidator.API", "HirCasa.CommonServices.PinValidator.API\HirCasa.CommonServices.PinValidator.API.csproj", "{0FE18BDD-BB11-4B3E-B744-AD96F16B02EA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3AF7DDBC-A679-4EFA-B3E0-B9232A6E6E95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AF7DDBC-A679-4EFA-B3E0-B9232A6E6E95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AF7DDBC-A679-4EFA-B3E0-B9232A6E6E95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AF7DDBC-A679-4EFA-B3E0-B9232A6E6E95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D61958-4F28-418C-9119-CDEA14C5CDB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D61958-4F28-418C-9119-CDEA14C5CDB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D61958-4F28-418C-9119-CDEA14C5CDB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D61958-4F28-418C-9119-CDEA14C5CDB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FE18BDD-BB11-4B3E-B744-AD96F16B02EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FE18BDD-BB11-4B3E-B744-AD96F16B02EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FE18BDD-BB11-4B3E-B744-AD96F16B02EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FE18BDD-BB11-4B3E-B744-AD96F16B02EA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,172 @@
+# Autor: Adrian Trejo
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - uat
+      - main
+
+  paths:
+    exclude:
+      - manifests/**
+      - azure-pipelines.yml
+      - Dockerfile
+
+resources:
+  - repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  - name: dockerRegistryServiceConnection
+    value: "012afc8d-0a09-4fe9-b2e4-c47bb910b809"
+  - name: imageRepository
+    value: "msapinvalidator"
+  - name: containerRegistry
+    value: "acrhircasaqa001.azurecr.io"
+  - name: dockerfilePath
+    value: "$(Build.SourcesDirectory)/Dockerfile"
+  - name: tag
+    value: "dev"
+  - name: namespace
+    value: desarrollo
+  - name: fileDeploy
+    value: "deployDesarrollo.yml" 
+  
+  - name: aks
+    value: "aksqa"
+
+##BASE DE DATOS
+
+  - name: Server-BD
+    value: General-Server-BD-Connection-QA
+
+  - name: User-BD
+    value: ServiciosComunes-User-BD-QA-001
+  - name: Pass-BD
+    value: ServiciosComunes-Pass-BD-QA-001
+
+  - name: ConnectionStrings.ContextDb
+    value: "Data Source=$(Server-DB);Persist Security Info=False;Database=PinValidatorDevDB;User ID=$(User-BD);Password=$(Pass-BD); Integrated Security=True; Trusted_Connection=False ;TrustServerCertificate=True;"
+  - name: Name-DB
+    value: PinValidatorDevDB
+
+  # validacion de rama qa
+  - ${{ if eq(variables['Build.SourceBranchName'], 'uat') }}:
+      - name: fileDeploy
+        value: "deployUAT.yml"
+      - name: namespace
+        value: qa
+      - name: tag
+        value: uat
+      - name: Name-DB
+        value: PinValidatorUatDB
+
+
+  # validacion de rama main
+  - ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      - name: fileDeploy
+        value: "deployProduccion.yml"
+      - name: namespace
+        value: produccion
+      - name: tag
+        value: produccion
+      - name: Server-BD
+        value: General-Server-BD-Connection-PROD
+      - name: User-BD
+        value: ServiciosComunes-User-BD-PROD-001
+      - name: Pass-BD
+        value: ServiciosComunes-Pass-BD-PROD-001
+      - name: Name-DB
+        value: PinValidatorDB
+
+  # Agent VM image name
+  - name: vmImageName
+    value: "ubuntu-latest"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+## ------------------------- KEY VAULTS ------------------------------
+          - task: AzureKeyVault@2
+            inputs:
+              azureSubscription: 'key vaults'
+              KeyVaultName: 'HirCasaKeyVault'
+              SecretsFilter: '$(Server-BD),$(User-BD),$(Pass-BD)'
+              RunAsPreJob: false
+
+          - task: VariableSetTask@2
+            inputs:
+              variableName: nombreServer
+              Value: '$($(Server-BD))'
+
+          - task: VariableSetTask@2
+            inputs:
+              variableName: nombreUser
+              Value: '$($(User-BD))'
+
+          - task: VariableSetTask@2
+            inputs:
+              variableName: nombrePass
+              Value: '$($(Pass-BD))'
+## ------------------------- KEY VAULTS ------------------------------
+
+          - pwsh: |
+              "##vso[task.setvariable variable=ConnectionStrings.ContextDb]" + "Data Source= $(nombreServer);Persist Security Info=False;Database=$(Name-DB);User ID=$(nombreUser);Password=$(nombrePass); Integrated Security=True; Trusted_Connection=False ;TrustServerCertificate=True;" | Write-Host
+          - task: FileTransform@1
+            inputs:
+              folderPath: '$(System.DefaultWorkingDirectory)'
+              fileType: 'json'
+              targetFiles: 'HirCasa.CommonServices.PinValidator.API/appsettings.json'
+          - task: Docker@2
+            inputs:
+              containerRegistry: "$(dockerRegistryServiceConnection)"
+              repository: "$(imageRepository)"
+              command: "build"
+              Dockerfile: "**/Dockerfile"
+              tags: |
+                $(tag)
+          - task: Docker@2
+            inputs:
+              containerRegistry: "$(dockerRegistryServiceConnection)"
+              repository: "$(imageRepository)"
+              command: "push"
+              tags: |
+                $(tag)
+          - publish: manifests
+            artifact: manifests
+  - stage: Release
+    jobs:
+      - deployment: DeployTok8s
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  persistCredentials: true
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    buildType: "current"
+                    artifactName: "manifests"
+                    targetPath: "$(System.ArtifactsDirectory)/manifests"
+                - task: KubernetesManifest@0
+                  inputs:
+                    action: "deploy"
+                    kubernetesServiceConnection: "$(aks)"
+                    namespace: "$(namespace)"
+                    manifests: "$(System.ArtifactsDirectory)/manifests/$(fileDeploy)"
+                    containers: $(containerRegistry)/$(imageRepository):$(tag)
+                - task: KubernetesManifest@1
+                  inputs:
+                    action: 'delete'
+                    connectionType: 'kubernetesServiceConnection'
+                    kubernetesServiceConnection: "$(aks)"
+                    namespace: '$(namespace)'
+                    arguments: 'pods -l $(namespace)=$(imageRepository)'
+      

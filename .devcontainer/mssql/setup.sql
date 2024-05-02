@@ -1,0 +1,5 @@
+CREATE DATABASE ApplicationDB;
+GO
+
+DROP DATABASE ApplicationDB;
+GO
